@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L'Oie Néon × Sanrio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07020d;
+    --panel: #120720;
+    --panel2: #1b0b30;
+    --violet: #b026ff;
+    --violet-soft: #7a2cff;
+    --pink: #ff5fa2;
+    --text: #f3e8ff;
+    --muted: #a58cc4;
+    --danger: #ff4d6d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 50% 30%, #1c0833 0%, #07020d 65%) fixed, var(--bg);
+    color: var(--text);
+    font-family: "Fredoka", "Segoe UI", system-ui, sans-serif;
+  }
+  .neon {
+    color: #fff;
+    text-shadow: 0 0 4px #fff, 0 0 10px var(--violet), 0 0 22px var(--violet), 0 0 40px var(--pink);
+  }
+  h1 { margin: 0; font-size: clamp(2rem, 6vw, 3.4rem); letter-spacing: .04em; text-align: center; }
+  .subtitle { text-align: center; color: var(--muted); margin: .3rem 0 1.4rem; }
+  button {
+    font-family: inherit; font-size: 1rem; font-weight: 600;
+    color: #fff; background: #1a0a2e;
+    border: 2px solid var(--violet); border-radius: 999px;
+    padding: .6rem 1.3rem; cursor: pointer;
+    box-shadow: 0 0 8px var(--violet), inset 0 0 8px rgba(176, 38, 255, .4);
+    transition: transform .1s, box-shadow .2s, opacity .2s;
+  }
+  button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 16px var(--violet), 0 0 30px var(--pink), inset 0 0 10px rgba(176, 38, 255, .6); }
+  button:disabled { opacity: .35; cursor: not-allowed; box-shadow: none; }
+  button.pink { border-color: var(--pink); box-shadow: 0 0 8px var(--pink), inset 0 0 8px rgba(255, 95, 162, .4); }
+  button.small { padding: .35rem .8rem; font-size: .85rem; }
+  input, select {
+    font-family: inherit; font-size: 1rem; color: var(--text);
+    background: #0b0416; border: 1.5px solid var(--violet-soft); border-radius: 10px;
+    padding: .5rem .7rem; outline: none;
+  }
+  input:focus, select:focus { border-color: var(--pink); box-shadow: 0 0 10px var(--pink); }
+  .hidden { display: none !important; }
+  .error { color: var(--danger); min-height: 1.3em; margin: .5rem 0; font-weight: 600; }
+
+  /* ---------- Écran de configuration ---------- */
+  #setup { max-width: 760px; margin: 0 auto; padding: 2rem 16px 3rem; }
+  .card-box {
+    background: linear-gradient(160deg, var(--panel2), var(--panel));
+    border: 1.5px solid rgba(176, 38, 255, .55); border-radius: 18px;
+    box-shadow: 0 0 20px rgba(176, 38, 255, .25);
+    padding: 1.2rem 1.4rem;
+  }
+  .row { display: flex; gap: .7rem; align-items: center; flex-wrap: wrap; }
+  #playerRows { display: grid; gap: .6rem; margin: 1rem 0; }
+  .player-row { display: grid; grid-template-columns: 96px 1fr 1fr; gap: .6rem; align-items: center; }
+  .preview-box { display: flex; flex-direction: column; align-items: center; }
+  .preview-name { font-size: .75rem; font-weight: 600; text-align: center; line-height: 1.1; }
+  .player-row input, .player-row select { width: 100%; }
+  .settings { margin: .4rem 0 1rem; padding: .8rem 1rem; border: 1px dashed rgba(255, 95, 162, .5); border-radius: 14px; display: grid; gap: .5rem; }
+  .setting-row { display: grid; grid-template-columns: 170px 1fr; gap: .6rem; align-items: center; }
+  .hint { color: var(--muted); font-size: .85rem; }
+  .setup-actions { display: flex; gap: .7rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
+
+  /* ---------- Écran de jeu ---------- */
+  #game { display: flex; gap: 1rem; padding: 1rem 16px; max-width: 1400px; margin: 0 auto; flex-wrap: wrap; align-items: flex-start; }
+  #boardWrap { flex: 1 1 560px; min-width: 0; }
+  #board { width: 100%; height: auto; display: block; max-height: calc(100vh - 2rem); }
+  #side { flex: 0 1 380px; width: 100%; display: flex; flex-direction: column; gap: .8rem; }
+  #turnBox h2 { margin: 0 0 .3rem; font-size: 1.3rem; }
+  .status { color: var(--muted); font-size: .95rem; min-height: 1.2em; }
+  #dice { display: flex; gap: .6rem; justify-content: center; margin: .6rem 0; }
+  .die {
+    width: 54px; height: 54px; border-radius: 12px; display: grid; place-items: center;
+    font-size: 1.8rem; font-weight: 700; background: #0b0416;
+    border: 2px solid var(--pink); box-shadow: 0 0 10px var(--pink);
+  }
+  #mainBtn { width: 100%; font-size: 1.15rem; }
+  #hand { display: grid; gap: .5rem; }
+  .hcard {
+    display: grid; grid-template-columns: 40px 1fr; gap: .5rem; align-items: center; text-align: left;
+    border-radius: 14px; padding: .5rem .7rem; width: 100%;
+  }
+  .hcard .ic { font-size: 1.7rem; text-align: center; }
+  .hcard small { display: block; color: var(--muted); font-weight: 400; font-size: .8rem; }
+  .hcard.off { border-color: #ff4d6d; box-shadow: 0 0 6px #ff4d6d; }
+  .hcard.def { border-color: #7fd8ff; box-shadow: 0 0 6px #7fd8ff; }
+  .hcard.bonus { border-color: #ffd23f; box-shadow: 0 0 6px #ffd23f; }
+  .empty { color: var(--muted); font-style: italic; font-size: .9rem; }
+  #players { display: grid; gap: .3rem; }
+  .pl { display: flex; align-items: center; gap: .5rem; padding: .25rem .4rem; border-radius: 8px; font-size: .95rem; }
+  .pl.current { background: rgba(176, 38, 255, .2); }
+  .pl .mini { flex: none; }
+  .pl .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pl .pos { font-weight: 700; }
+  #log { max-height: 220px; overflow-y: auto; font-size: .88rem; display: flex; flex-direction: column; gap: .2rem; }
+  #log div { border-left: 2px solid var(--violet-soft); padding-left: .45rem; }
+  #log div.turn { border-color: var(--pink); color: var(--pink); font-weight: 600; margin-top: .3rem; }
+  .box-title { margin: 0 0 .5rem; font-size: 1rem; color: var(--pink); letter-spacing: .03em; }
+  .top-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+
+  /* ---------- Plateau SVG ---------- */
+  .cell circle.bg { fill: #0d0519; stroke-width: 2.5; }
+  .cell text.num { font-size: 13px; font-weight: 700; fill: #fff; text-anchor: middle; }
+  .cell text.ico { font-size: 22px; text-anchor: middle; dominant-baseline: central; }
+  /* un peu plus court que la pause entre deux cases : le pion finit de glisser avant de repartir
+     (--pawn-move est réglé par la vitesse choisie, .35s pour la vitesse normale) */
+  .pawn { transition: transform var(--pawn-move, .35s) ease-out; }
+  .pawn.current .halo { animation: pulse 1s infinite alternate; }
+  @keyframes pulse { from { opacity: .25; } to { opacity: .9; } }
+
+  /* ---------- Barre d'outils ---------- */
+  #toolbar {
+    position: sticky; top: 0; z-index: 15;          /* au-dessus de la modale du jeu (10), sous la fenêtre d'information (20) */
+    display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; justify-content: space-between;
+    padding: .5rem 16px; background: rgba(7, 2, 13, .88); backdrop-filter: blur(6px);
+    border-bottom: 1px solid rgba(176, 38, 255, .45);
+  }
+  #toolbar .brand { font-weight: 700; font-size: 1.1rem; }
+  #toolbar .tools { display: flex; flex-wrap: wrap; gap: .5rem; }
+  #toolbar .short { display: none; }
+
+  /* ---------- Fenêtre d'information ---------- */
+  #info { position: fixed; inset: 0; background: rgba(4, 0, 10, .82); display: grid; place-items: center; z-index: 20; padding: 16px; }
+  #infoBox { max-width: 680px; width: 100%; max-height: 88vh; overflow-y: auto; }
+  .info-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+  .info-head h3 { margin: 0 0 .5rem; }
+  #infoOptions { display: flex; gap: .5rem; justify-content: flex-end; flex-wrap: wrap; margin-top: 1rem; }
+  #infoOptions:empty { display: none; }
+  .catalog { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  .catalog th { text-align: left; color: var(--pink); padding: .4rem .3rem; border-bottom: 1px solid rgba(176, 38, 255, .5); }
+  .catalog td { padding: .4rem .3rem; border-bottom: 1px solid rgba(176, 38, 255, .18); vertical-align: top; }
+  .catalog td.ic { font-size: 1.5rem; width: 2.2rem; text-align: center; }
+  .tag { display: inline-block; padding: 0 .45rem; border-radius: 999px; border: 1px solid currentColor; font-size: .75rem; }
+
+  /* ---------- Modale du jeu ---------- */
+  #modal { position: fixed; inset: 0; background: rgba(4, 0, 10, .78); display: grid; place-items: center; z-index: 10; padding: 16px; }
+  #modalBox { max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; }
+  #modalBox h3 { margin-top: 0; }
+  #modalOptions { display: grid; gap: .5rem; margin-top: 1rem; }
+  .rules h4 { color: var(--pink); margin: 1rem 0 .3rem; }
+  .rules ul { margin: 0; padding-left: 1.2rem; }
+  .rules li { margin: .2rem 0; }
+
+  @media (max-width: 600px) {
+    .player-row { grid-template-columns: 84px 1fr; }
+    .player-row .preview-box { grid-row: span 2; }
+    .setting-row { grid-template-columns: 1fr; gap: .2rem; }
+    #toolbar { padding: .4rem 8px; }
+    #toolbar .brand, #toolbar .long { display: none; }
+    #toolbar .short { display: inline; }
+    #toolbar .tools { gap: .3rem; width: 100%; justify-content: center; }
+    #toolbar button.small { padding: .3rem .55rem; font-size: .8rem; }
+    .player-row select { grid-column: 2; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Filtres de lueur néon partagés par tous les dessins -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowSmall" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+</svg>
+
+<!-- ================= BARRE D'OUTILS (toujours visible) ================= -->
+<header id="toolbar">
+  <span class="brand neon">L'Oie Néon × Sanrio</span>
+  <div class="tools">
+    <button id="rulesBtn" class="small pink">📜 Règles</button>
+    <button id="catalogBtn" class="small">📖 Catalogue</button>
+    <button id="restartBtn" class="small game-only hidden" title="Nouvelle partie avec les mêmes joueurs">🔁 <span class="long">Nouvelle partie avec les mêmes joueurs</span><span class="short">Mêmes joueurs</span></button>
+    <button id="quitBtn" class="small game-only hidden" title="Changer les joueurs">✏️ <span class="long">Changer les joueurs</span><span class="short">Joueurs</span></button>
+  </div>
+</header>
+
+<!-- ================= ÉCRAN DE CONFIGURATION ================= -->
+<section id="setup">
+  <h1 class="neon">L'Oie Néon × Sanrio</h1>
+  <p class="subtitle">Jeu de l'oie en spirale de Fibonacci — 55 cases jusqu'à Sanrio Puroland 🏰</p>
+
+  <div class="card-box">
+    <label for="nbPlayers"><b>Nombre de joueurs (2 à 10)</b></label>
+    <div class="row" style="margin-top:.5rem">
+      <input id="nbPlayers" type="number" min="2" max="10" value="4" style="width:110px">
+      <button id="validateNb" class="small">Valider</button>
+    </div>
+    <div id="nbError" class="error"></div>
+
+    <div class="settings">
+      <b>Réglages</b>
+      <div class="setting-row">
+        <label for="cardsSetting">Quantité de cartes</label>
+        <select id="cardsSetting">
+          <option value="peu">Peu (3 cases Cadeau)</option>
+          <option value="normal" selected>Normal (5 cases Cadeau)</option>
+          <option value="beaucoup">Beaucoup (8 cases Cadeau)</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <label for="speedSetting">Vitesse des pions</label>
+        <select id="speedSetting">
+          <option value="lente">Lente</option>
+          <option value="normale" selected>Normale</option>
+          <option value="rapide">Rapide</option>
+        </select>
+      </div>
+      <div id="settingsHint" class="hint"></div>
+    </div>
+
+    <div id="namesBlock" class="hidden">
+      <b>Pseudos et costumes des oies</b>
+      <div id="playerRows"></div>
+      <div id="namesError" class="error"></div>
+      <div class="setup-actions">
+        <button id="startBtn" class="pink">✨ Lancer la partie</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ÉCRAN DE JEU ================= -->
+<section id="game" class="hidden">
+  <div id="boardWrap">
+    <svg id="board" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" aria-label="Plateau en spirale"></svg>
+  </div>
+
+  <aside id="side">
+    <div class="card-box" id="turnBox">
+      <h2 id="turnName" class="neon">—</h2>
+      <div id="turnStatus" class="status"></div>
+      <div id="dice"><div class="die" id="die1">?</div><div class="die" id="die2">?</div></div>
+      <button id="mainBtn" class="pink">🎲 Lancer les dés</button>
+    </div>
+
+    <div class="card-box">
+      <h3 class="box-title">Cartes en main (1 par tour, avant les dés)</h3>
+      <div id="hand"></div>
+    </div>
+
+    <div class="card-box">
+      <h3 class="box-title">Joueurs</h3>
+      <div id="players"></div>
+    </div>
+
+    <div class="card-box">
+      <h3 class="box-title">Journal</h3>
+      <div id="log"></div>
+    </div>
+  </aside>
+</section>
+
+<!-- ================= FENÊTRE D'INFORMATION (règles, catalogue, confirmations) =================
+     Calque séparé de la modale du jeu : l'ouvrir ne perturbe jamais une modale de jeu en attente. -->
+<div id="info" class="hidden" role="dialog" aria-modal="true">
+  <div id="infoBox" class="card-box">
+    <div class="info-head">
+      <h3 id="infoTitle" class="neon"></h3>
+      <button id="infoClose" class="small" aria-label="Fermer">✕</button>
+    </div>
+    <div id="infoBody"></div>
+    <div id="infoOptions"></div>
+  </div>
+</div>
+
+<!-- ================= MODALE DU JEU ================= -->
+<div id="modal" class="hidden">
+  <div id="modalBox" class="card-box">
+    <h3 id="modalTitle" class="neon"></h3>
+    <div id="modalBody"></div>
+    <div id="modalOptions"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   1. DONNÉES DU JEU
+   ===================================================================== */
+
+const LAST = 55;                         // case d'arrivée (nombre de Fibonacci)
+const MAX_PLAYERS = 10, MIN_PLAYERS = 2;
+const HAND_MAX = 3;
+
+// Vitesse des pions (en millisecondes, multipliées par animSpeed : 0 pendant les tests)
+const STEP_DELAY = 400;                  // pause entre deux cases lors d'un déplacement case par case
+const JUMP_DELAY = 800;                  // pause après un saut direct (Nuage, Labyrinthe, Flaque)
+
+// Réglages choisis avant la partie
+const SPEEDS = {                         // vitesse des pions : pauses en millisecondes
+  lente:   { step: 600, jump: 1100 },
+  normale: { step: STEP_DELAY, jump: JUMP_DELAY },
+  rapide:  { step: 200, jump: 450 },
+};
+const CARD_CELL_SETS = {                 // quantité de cartes : numéros des cases Cadeau
+  peu:      [5, 13, 34],
+  normal:   [5, 8, 13, 21, 34],          // nombres de Fibonacci
+  beaucoup: [5, 8, 13, 16, 21, 34, 37, 49],
+};
+const DEFAULT_SETTINGS = { cards: "normal", speed: "normale" };
+let stepDelay = STEP_DELAY, jumpDelay = JUMP_DELAY;
+
+// Costumes Sanrio des oies (un contour néon et un corps clair par costume)
+const COSTUMES = [
+  { id: "kitty",    name: "Hello Kitty",       color: "#ff3b5c", body: "#ffffff" },
+  { id: "kuromi",   name: "Kuromi",            color: "#b026ff", body: "#eadcff" },
+  { id: "melody",   name: "My Melody",         color: "#ff7ad9", body: "#fff0f8" },
+  { id: "cinna",    name: "Cinnamoroll",       color: "#7fd8ff", body: "#eef9ff" },
+  { id: "purin",    name: "Pompompurin",       color: "#ffd23f", body: "#ffe680" },
+  { id: "pochacco", name: "Pochacco",          color: "#ffffff", body: "#f4f4f4" },
+  { id: "keroppi",  name: "Keroppi",           color: "#5cff5c", body: "#c8ffc0" },
+  { id: "badtz",    name: "Badtz-Maru",        color: "#4d7cff", body: "#dbe4ff" },
+  { id: "gudetama", name: "Gudetama",          color: "#ffa53f", body: "#fff3cc" },
+  { id: "stars",    name: "Little Twin Stars", color: "#00ffd5", body: "#d8fff7" },
+];
+
+// Types de cases
+const CELL_TYPES = {
+  start:  { name: "Départ",                 icon: "🌸", color: "#b026ff", desc: "Toutes les oies partent d'ici." },
+  normal: { name: "",                        icon: "",   color: "#7a2cff", desc: "" },
+  portal: { name: "Nœud de Hello Kitty",    icon: "🎀", color: "#ff5fa2", desc: "Avancez encore du même nombre de cases." },
+  bridge: { name: "Nuage de Cinnamoroll",   icon: "☁️", color: "#7fd8ff", desc: "Envolez-vous jusqu'à la case 12." },
+  cage:   { name: "Piège de Kuromi",        icon: "💀", color: "#d14bff", desc: "Passez 2 tours." },
+  hole:   { name: "Sieste de Gudetama",     icon: "🍳", color: "#ffd23f", desc: "Bloqué jusqu'à ce qu'un autre joueur tombe ici." },
+  glitch: { name: "Labyrinthe de Chococat", icon: "🐈‍⬛", color: "#ff9f40", desc: "Perdu ! Reculez à la case 30." },
+  slip:   { name: "Flaque de Keroppi",      icon: "🐸", color: "#5cff5c", desc: "Vous glissez jusqu'à la case départ." },
+  card:   { name: "Cadeau Sanrio",          icon: "🎁", color: "#fff36b", desc: "Piochez une carte action." },
+  end:    { name: "Sanrio Puroland",        icon: "🏰", color: "#ffd700", desc: "Arrivez ici pile pour gagner !" },
+};
+
+const PORTALS = [10, 23, 29, 41, 47];
+let cardCells = CARD_CELL_SETS.normal;   // cases Cadeau de la partie en cours
+const FIXED_CELLS = { 6: "bridge", 19: "cage", 31: "hole", 42: "glitch", 52: "slip" };
+const BRIDGE_TARGET = 12, GLITCH_TARGET = 30;
+
+function cellType(n) {
+  if (n === 0) return "start";
+  if (n === LAST) return "end";
+  if (PORTALS.includes(n)) return "portal";
+  if (cardCells.includes(n)) return "card";
+  return FIXED_CELLS[n] || "normal";
+}
+
+// Cartes actions : registre rempli par registerCard() (voir section 10)
+const CARDS = {};
+const COPIES_PER_CARD = 4;               // exemplaires dans la pioche si la carte ne précise pas « copies »
+const CARD_TYPES = {                     // type déclaré → code interne, libellé et couleur par défaut
+  offensive:  { kind: "off",   label: "offensive", color: "#ff4d6d" },
+  "défensive": { kind: "def",   label: "défensive", color: "#7fd8ff" },
+  bonus:      { kind: "bonus", label: "bonus",     color: "#ffd23f" },
+};
+
+/* =====================================================================
+   2. OUTILS
+   ===================================================================== */
+
+const $ = (id) => document.getElementById(id);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const SVGNS = "http://www.w3.org/2000/svg";
+function svg(tag, attrs = {}, parent) {
+  const el = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(el);
+  return el;
+}
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Dés : on peut forcer des valeurs (utile pour tester)
+const forcedDice = [];
+const rollDie = () => (forcedDice.length ? forcedDice.shift() : 1 + Math.floor(Math.random() * 6));
+let animSpeed = 1;                       // 0 = pas d'animation (tests)
+const wait = (ms) => sleep(ms * animSpeed);
+
+/* =====================================================================
+   3. MODALE GÉNÉRIQUE (renvoie une promesse)
+   ===================================================================== */
+
+let closeModal = null;                   // ferme la modale du jeu ouverte (null si aucune)
+function showModal({ title, body = "", options = [], cancel = null }) {
+  return new Promise((resolve) => {
+    $("modalTitle").textContent = title;
+    $("modalBody").innerHTML = body;
+    const box = $("modalOptions");
+    box.innerHTML = "";
+    const close = (v) => { closeModal = null; $("modal").classList.add("hidden"); resolve(v); };
+    closeModal = close;
+    options.forEach((o) => {
+      const b = document.createElement("button");
+      b.innerHTML = o.label;
+      if (o.cls) b.className = o.cls;
+      if (o.disabled) b.disabled = true;
+      if (o.color) b.style.borderColor = o.color;
+      b.onclick = () => close(o.value);
+      box.appendChild(b);
+    });
+    if (cancel) {
+      const b = document.createElement("button");
+      b.textContent = cancel;
+      b.className = "small";
+      b.onclick = () => close(null);
+      box.appendChild(b);
+    }
+    $("modal").classList.remove("hidden");
+  });
+}
+
+function rulesHtml() {
+  const cells = ["portal", "bridge", "cage", "hole", "glitch", "slip", "card"].map((t) => {
+    const c = CELL_TYPES[t];
+    const where = t === "portal" ? PORTALS.join(", ")
+      : t === "card" ? giftCells().join(", ")
+      : Object.keys(FIXED_CELLS).filter((k) => FIXED_CELLS[k] === t).join(", ");
+    return `<li>${c.icon} <b>${c.name}</b> (case ${where}) : ${c.desc}</li>`;
+  }).join("");
+  const cards = Object.values(CARDS).map((c) => `<li>${c.icon} <b>${esc(c.name)}</b> (${CARD_TYPES[c.type].label}) : ${esc(c.desc)}</li>`).join("");
+  return `<div class="rules">
+    <h4>But du jeu</h4>
+    <ul><li>Être le premier à atteindre <b>pile</b> la case ${LAST} 🏰 au centre de la spirale.</li></ul>
+    <h4>Déroulement d'un tour</h4>
+    <ul><li>On peut d'abord jouer <b>une</b> carte de sa main (facultatif).</li>
+    <li>Puis on lance <b>2 dés</b> et l'oie avance case par case du total.</li>
+    <li><b>Rebond</b> : si on dépasse la case ${LAST}, on recule des cases en trop (en 50, un 8 mène en 52).</li>
+    <li>L'effet de la case d'arrivée s'applique, puis c'est au joueur suivant.</li>
+    <li>Un joueur bloqué (Piège, Sieste, Bâillement) passe son tour avec le bouton « Passer le tour ».</li></ul>
+    <h4>Cases spéciales</h4><ul>${cells}</ul>
+    <h4>Cartes actions (style Mille Bornes)</h4>
+    <ul><li>On gagne une carte en tombant sur un 🎁 Cadeau Sanrio. On en garde ${HAND_MAX} au maximum.</li>
+    <li>On peut jouer <b>1 carte par tour, avant de lancer les dés</b>.</li>
+    <li>Quand on est bloqué, on peut seulement jouer : ${Object.values(CARDS).filter((c) => c.playableWhenBlocked).map((c) => c.name).join(", ")}.</li>
+    <li>La Mélodie protège avant le Câlin. Une carte bloquée est perdue.</li>
+    <li>Les déplacements imposés par une carte ne déclenchent pas les cases.</li>
+    ${cards}</ul></div>`;
+}
+/* ---------- Fenêtre d'information (règles, catalogue, confirmations) ---------- */
+
+let closeInfo = null;
+// Ouvre la fenêtre d'information. Renvoie une promesse : valeur du bouton choisi, ou null si on ferme.
+function showInfo(title, body, options = []) {
+  if (closeInfo) closeInfo(null);
+  return new Promise((resolve) => {
+    $("infoTitle").textContent = title;
+    $("infoBody").innerHTML = body;
+    const box = $("infoOptions");
+    box.innerHTML = "";
+    closeInfo = (v) => { closeInfo = null; $("info").classList.add("hidden"); resolve(v); };
+    options.forEach((o) => {
+      const b = document.createElement("button");
+      b.textContent = o.label;
+      b.className = o.cls || "small";
+      b.onclick = () => closeInfo(o.value);
+      box.appendChild(b);
+    });
+    $("info").classList.remove("hidden");
+    $("infoClose").focus();
+  });
+}
+const confirmInfo = (title, text, okLabel) =>
+  showInfo(title, `<p>${text}</p>`, [{ label: "Annuler", value: false }, { label: okLabel, value: true, cls: "small pink" }]);
+
+const showRules = () => showInfo("Règles du jeu", rulesHtml());
+
+// Cases Cadeau : celles de la partie en cours, sinon celles du réglage choisi
+const giftCells = () => (G ? cardCells : CARD_CELL_SETS[readSettings().cards]);
+
+function catalogHtml() {
+  const where = (t) => t === "portal" ? PORTALS.join(", ")
+    : t === "card" ? giftCells().join(", ")
+    : Object.keys(FIXED_CELLS).filter((k) => FIXED_CELLS[k] === t).join(", ");
+  const cells = ["portal", "bridge", "cage", "hole", "glitch", "slip", "card", "end"].map((t) => {
+    const c = CELL_TYPES[t];
+    return `<tr><td class="ic">${c.icon}</td><td><b style="color:${c.color}">${c.name}</b></td><td>${t === "end" ? LAST : where(t)}</td><td>${c.desc}</td></tr>`;
+  }).join("");
+  const cards = Object.values(CARDS).map((c) =>
+    `<tr><td class="ic">${c.icon}</td><td><b style="color:${c.color}">${esc(c.name)}</b><br><span class="tag" style="color:${c.color}">${CARD_TYPES[c.type].label}</span></td><td>×${c.copies}</td><td>${esc(c.desc)}</td></tr>`).join("");
+  const total = Object.values(CARDS).reduce((n, c) => n + c.copies, 0);
+  return `<h4 class="box-title">Cases spéciales</h4>
+    <table class="catalog"><thead><tr><th></th><th>Case</th><th>N°</th><th>Effet</th></tr></thead><tbody>${cells}</tbody></table>
+    <h4 class="box-title" style="margin-top:1.2rem">Cartes actions (${Object.keys(CARDS).length} cartes, pioche de ${total})</h4>
+    <table class="catalog"><thead><tr><th></th><th>Carte</th><th>Nb</th><th>Effet</th></tr></thead><tbody>${cards}</tbody></table>`;
+}
+const showCatalog = () => showInfo("Catalogue des cases et des cartes", catalogHtml());
+
+/* =====================================================================
+   4. ÉCRAN DE CONFIGURATION
+   ===================================================================== */
+
+function readPlayerCount() {
+  const raw = $("nbPlayers").value.trim();
+  const n = Number(raw);
+  if (raw === "" || !Number.isInteger(n) || n < MIN_PLAYERS || n > MAX_PLAYERS) return null;
+  return n;
+}
+
+function buildPlayerRows() {
+  const n = readPlayerCount();
+  if (n === null) {
+    $("nbError").textContent = `Nombre invalide : entrez un nombre entier entre ${MIN_PLAYERS} et ${MAX_PLAYERS}.`;
+    $("namesBlock").classList.add("hidden");
+    return;
+  }
+  $("nbError").textContent = "";
+  // On garde les saisies déjà faites
+  const old = [...document.querySelectorAll(".player-row")].map((r) => ({
+    name: r.querySelector("input").value, costume: r.querySelector("select").value,
+  }));
+  const rows = $("playerRows");
+  rows.innerHTML = "";
+  for (let i = 0; i < n; i++) {
+    const prev = old[i] || { name: "", costume: COSTUMES[i].id };
+    const row = document.createElement("div");
+    row.className = "player-row";
+    row.innerHTML = `
+      <div class="preview-box"><svg viewBox="-19 -19 38 38" width="72" height="72" class="preview"></svg><span class="preview-name"></span></div>
+      <input type="text" maxlength="16" placeholder="Pseudo du joueur ${i + 1}" value="${esc(prev.name)}" aria-label="Pseudo du joueur ${i + 1}">
+      <select aria-label="Costume du joueur ${i + 1}">${COSTUMES.map((c) => `<option value="${c.id}">${c.name}</option>`).join("")}</select>`;
+    row.querySelector("select").value = prev.costume;
+    const updatePreview = () => {
+      const p = row.querySelector(".preview");
+      p.innerHTML = "";
+      const costume = COSTUMES.find((c) => c.id === row.querySelector("select").value);
+      drawGoose(p, costume);
+      const name = row.querySelector(".preview-name");
+      name.textContent = costume.name;
+      name.style.color = costume.color;
+    };
+    row.querySelector("select").addEventListener("change", updatePreview);
+    updatePreview();
+    rows.appendChild(row);
+  }
+  $("namesError").textContent = "";
+  $("namesBlock").classList.remove("hidden");
+}
+
+function readPlayers() {
+  const rows = [...document.querySelectorAll(".player-row")];
+  const list = rows.map((r, i) => ({
+    name: r.querySelector("input").value.trim(),
+    costume: COSTUMES.find((c) => c.id === r.querySelector("select").value),
+    index: i + 1,
+  }));
+  const empty = list.find((p) => p.name === "");
+  if (empty) return `Le joueur ${empty.index} doit avoir un pseudo.`;
+  const names = list.map((p) => p.name.toLowerCase());
+  if (new Set(names).size !== names.length) return "Deux joueurs ont le même pseudo.";
+  const cos = list.map((p) => p.costume.id);
+  if (new Set(cos).size !== cos.length) return "Chaque joueur doit choisir un costume différent.";
+  return list;
+}
+
+/* =====================================================================
+   5. DESSIN : OIE DÉGUISÉE ET PLATEAU
+   ===================================================================== */
+
+// Dessine une oie déguisée (centrée en 0,0, environ 30 px de large) avec l'accessoire de son personnage.
+// Sert pour les pions du plateau, l'aperçu de l'écran de choix et le petit pion du panneau.
+function drawGoose(parent, costume) {
+  const col = costume.color;
+  const outer = svg("g", { filter: "url(#glowSmall)" }, parent);
+  const g = svg("g", { transform: "translate(-2 5)" }, outer);     // recentre le dessin
+  const back = svg("g", {}, g);                                     // accessoires derrière le corps
+  // corps + cou + tête, remplis d'une couleur claire et entourés du néon du personnage
+  svg("path", {
+    d: "M-12 4 C-12 -2 -6 -3 -1 -1 L3 0 C4 -4 3 -8 5 -10 C7 -12 10 -11 10 -8 L10 -5.5 C9 -3 8 -1 9 2 C10 8 4 11 -3 11 C-9 11 -12 8 -12 4 Z",
+    fill: costume.body, stroke: col, "stroke-width": 1.7, "stroke-linejoin": "round",
+  }, g);
+  svg("path", { d: "M10 -8.4 L14.8 -7 L10 -5.4 Z", fill: "#ffa53f", stroke: "#c25e00", "stroke-width": .5 }, g);   // bec
+  svg("path", { d: "M-7 4 C-4 2 0 3 3 5", fill: "none", stroke: col, "stroke-width": 1.3, "stroke-linecap": "round" }, g);   // aile
+  svg("circle", { cx: 7.6, cy: -8.3, r: 1.1, fill: "#1a0a2e" }, g);   // œil
+  const a = svg("g", {}, g);                                        // accessoires devant
+  const star = (cx, cy, r, fill) => {
+    let d = "";
+    for (let i = 0; i < 10; i++) {
+      const rr = i % 2 ? r * 0.45 : r, an = -Math.PI / 2 + i * Math.PI / 5;
+      d += (i ? "L" : "M") + (cx + rr * Math.cos(an)).toFixed(2) + " " + (cy + rr * Math.sin(an)).toFixed(2);
+    }
+    return { d: d + "Z", fill };
+  };
+  switch (costume.id) {
+    case "kitty":     // gros nœud rouge sur l'oreille gauche
+      svg("path", { d: "M5 -13 C1 -19 -4 -17 -2 -12.5 C-4 -8 1 -7 5 -11 Z M5 -13 C8 -19 13 -18 11 -13.5 C13 -9.5 8 -8.5 5 -11 Z", fill: "#ff1f45", stroke: "#fff", "stroke-width": .7 }, a);
+      svg("circle", { cx: 5, cy: -12, r: 2, fill: "#ff1f45", stroke: "#fff", "stroke-width": .7 }, a);
+      break;
+    case "kuromi":    // capuche noire à oreilles pointues + tête de mort rose
+      svg("path", { d: "M2.2 -7.5 C1.5 -12 2 -17 -1 -22 C3.5 -19.5 5.5 -17 6.5 -14.5 C7.5 -17 10 -20 14 -21.5 C12 -16.5 12.2 -12 11.5 -7.5 C9 -9.5 5 -9.5 2.2 -7.5 Z", fill: "#111", stroke: "#e9b8ff", "stroke-width": .8 }, a);
+      svg("circle", { cx: 7, cy: -12, r: 2.1, fill: "#ff5fa2" }, a);
+      svg("circle", { cx: 6.2, cy: -12.3, r: .45, fill: "#111" }, a);
+      svg("circle", { cx: 7.8, cy: -12.3, r: .45, fill: "#111" }, a);
+      break;
+    case "melody":    // capuche rose à longues oreilles + fleur
+      svg("ellipse", { cx: 3.8, cy: -17.5, rx: 2.3, ry: 6, fill: "#ff8fd0", stroke: "#fff", "stroke-width": .6, transform: "rotate(-14 3.8 -17.5)" }, a);
+      svg("ellipse", { cx: 10.4, cy: -17.5, rx: 2.3, ry: 6, fill: "#ff8fd0", stroke: "#fff", "stroke-width": .6, transform: "rotate(14 10.4 -17.5)" }, a);
+      svg("path", { d: "M2.6 -7.6 C2 -12 4 -14.5 7 -14.5 C10 -14.5 12 -12 11.4 -7.6 C9 -9.4 5 -9.4 2.6 -7.6 Z", fill: "#ff8fd0", stroke: "#fff", "stroke-width": .6 }, a);
+      svg("circle", { cx: 12, cy: -21.5, r: 1.9, fill: "#fff" }, a);
+      svg("circle", { cx: 12, cy: -21.5, r: .8, fill: "#ffd23f" }, a);
+      break;
+    case "cinna":     // longues oreilles tombantes + queue en roulé à la cannelle
+      svg("ellipse", { cx: 0, cy: -8.5, rx: 7.5, ry: 2.4, fill: "#fff", stroke: "#3fb4ff", "stroke-width": .8, transform: "rotate(22 0 -8.5)" }, back);
+      svg("ellipse", { cx: 14, cy: -12, rx: 6.5, ry: 2.2, fill: "#fff", stroke: "#3fb4ff", "stroke-width": .8, transform: "rotate(-28 14 -12)" }, a);
+      svg("path", { d: "M-12 2 C-16 2 -17 -3 -14 -4 C-11 -5 -10 -2 -12.5 -1.5", fill: "none", stroke: "#3fb4ff", "stroke-width": 1.6, "stroke-linecap": "round" }, a);
+      break;
+    case "purin":     // béret marron
+      svg("ellipse", { cx: 7, cy: -13.2, rx: 6.5, ry: 2.8, fill: "#7a4a1f", stroke: "#3d2208", "stroke-width": .6 }, a);
+      svg("rect", { x: 6.3, y: -17.6, width: 1.4, height: 2.4, rx: .6, fill: "#7a4a1f" }, a);
+      break;
+    case "pochacco":  // oreilles noires tombantes + ballon de basket
+      svg("ellipse", { cx: 3, cy: -9, rx: 2.3, ry: 5.2, fill: "#111", stroke: "#fff", "stroke-width": .6, transform: "rotate(28 3 -9)" }, a);
+      svg("ellipse", { cx: 11.8, cy: -12.5, rx: 2.1, ry: 4.4, fill: "#111", stroke: "#fff", "stroke-width": .6, transform: "rotate(-35 11.8 -12.5)" }, a);
+      svg("circle", { cx: 12, cy: 8.5, r: 3.4, fill: "#ff8a1f", stroke: "#5a2a00", "stroke-width": .6 }, a);
+      svg("path", { d: "M8.6 8.5 H15.4 M12 5.1 V11.9", stroke: "#5a2a00", "stroke-width": .5 }, a);
+      break;
+    case "keroppi":   // gros yeux de grenouille + joue rouge
+      [4.4, 10.4].forEach((x) => {
+        svg("circle", { cx: x, cy: -13.8, r: 3.3, fill: "#fff", stroke: "#1fa81f", "stroke-width": 1 }, a);
+        svg("circle", { cx: x + .4, cy: -13.6, r: 1.4, fill: "#111" }, a);
+      });
+      svg("circle", { cx: 6, cy: -5.5, r: 1.1, fill: "#ff4d6d" }, a);
+      break;
+    case "badtz":     // épis de cheveux noirs
+      svg("path", { d: "M2.5 -9.5 L2 -17 L4.6 -12.5 L6 -20 L7.6 -12.8 L10 -19 L10.4 -12.6 L13.5 -16.5 L11.5 -9.5 Z", fill: "#111", stroke: "#8fb0ff", "stroke-width": .8, "stroke-linejoin": "round" }, a);
+      break;
+    case "gudetama":  // œuf au plat sur la tête + couverture de bacon
+      svg("path", { d: "M1.5 -12 C1 -15.5 5 -16.5 7 -15.5 C10 -17 13.5 -15 12.5 -12.5 C13 -10.5 9 -10 7 -10.8 C4.5 -10 1 -10.2 1.5 -12 Z", fill: "#fff", stroke: "#e0c070", "stroke-width": .5 }, a);
+      svg("ellipse", { cx: 7, cy: -13.2, rx: 2.8, ry: 2, fill: "#ffbf00", stroke: "#d48600", "stroke-width": .5 }, a);
+      svg("path", { d: "M-10 1 C-6 -1 -2 1 2 -1 L3 4 C-1 6 -5 4 -9 6 Z", fill: "#ff7a6b", stroke: "#b33a2c", "stroke-width": .5 }, a);
+      svg("path", { d: "M-9.5 3.4 C-5.5 1.6 -1.5 3.5 2.5 1.5", fill: "none", stroke: "#fff", "stroke-width": .8 }, a);
+      break;
+    case "stars":     // deux étoiles (Kiki et Lala)
+      svg("path", { ...star(5.5, -15, 4.2, "#fff36b"), stroke: "#d4a800", "stroke-width": .5 }, a);
+      svg("path", { ...star(11.8, -17.5, 2.6, "#ff9ad5"), stroke: "#d4579c", "stroke-width": .4 }, a);
+      break;
+  }
+  return outer;
+}
+
+const CX = 400, CY = 400;
+const R_OUT = 352, R_IN = 92;            // rayon de la case 0 et de la case 54
+const CELL_R = 29;
+let cellPos = [];                        // coordonnées [x, y] de chaque case
+
+// Positions des cases le long d'une spirale (espacement régulier)
+function computeCellPositions() {
+  const turns = 3.45;
+  const thetaMax = turns * 2 * Math.PI;
+  const pt = (t) => {
+    const r = R_OUT - (R_OUT - R_IN) * t / thetaMax;
+    const a = t + Math.PI * 0.75;          // départ en bas à gauche
+    return [CX + r * Math.cos(a), CY + r * Math.sin(a)];
+  };
+  const samples = [], lens = [0];
+  const STEPS = 6000;
+  for (let i = 0; i <= STEPS; i++) samples.push(pt(thetaMax * i / STEPS));
+  for (let i = 1; i <= STEPS; i++) {
+    lens.push(lens[i - 1] + Math.hypot(samples[i][0] - samples[i - 1][0], samples[i][1] - samples[i - 1][1]));
+  }
+  const total = lens[STEPS];
+  const pos = [];
+  let j = 0;
+  for (let k = 0; k < LAST; k++) {
+    const target = total * k / (LAST - 1);
+    while (j < STEPS && lens[j] < target) j++;
+    pos.push(samples[j]);
+  }
+  pos.push([CX, CY]);                      // case 55 au centre
+  return { pos, samples };
+}
+
+// Décor : pavage des carrés de Fibonacci et spirale d'or
+function drawGoldenSpiral(parent) {
+  const F = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55];
+  let bx = 0, by = 0, bw = 1, bh = 1;
+  const squares = [{ x: 0, y: 0, s: 1, from: [0, 1], to: [1, 0], c: [1, 1] }];
+  for (let i = 1; i < F.length; i++) {
+    const s = F[i];
+    let q;
+    switch (i % 4) {
+      case 1: q = { x: bx + bw, y: by, s }; q.from = [q.x, q.y]; q.to = [q.x + s, q.y + s]; break;
+      case 2: q = { x: bx, y: by + bh, s }; q.from = [q.x + s, q.y]; q.to = [q.x, q.y + s]; break;
+      case 3: q = { x: bx - s, y: by, s }; q.from = [q.x + s, q.y + s]; q.to = [q.x, q.y]; break;
+      case 0: q = { x: bx, y: by - s, s }; q.from = [q.x, q.y + s]; q.to = [q.x + s, q.y]; break;
+    }
+    squares.push(q);
+    bx = Math.min(bx, q.x); by = Math.min(by, q.y);
+    const rx = Math.max(bx + bw, q.x + s), ry = Math.max(by + bh, q.y + s);
+    bw = rx - bx; bh = ry - by;
+  }
+  // Pôle de la spirale : point fixe de la similitude qui envoie un carré sur le suivant
+  const n = squares.length - 1;
+  const A = squares[n - 1], B = squares[n];
+  const cz = (p) => ({ re: p[0], im: p[1] });
+  const sub = (u, v) => ({ re: u.re - v.re, im: u.im - v.im });
+  const mul = (u, v) => ({ re: u.re * v.re - u.im * v.im, im: u.re * v.im + u.im * v.re });
+  const div = (u, v) => { const d = v.re * v.re + v.im * v.im; return { re: (u.re * v.re + u.im * v.im) / d, im: (u.im * v.re - u.re * v.im) / d }; };
+  const a = div(sub(cz(B.to), cz(B.from)), sub(cz(A.to), cz(A.from)));
+  const b = sub(cz(B.from), mul(a, cz(A.from)));
+  const pole = div(b, sub({ re: 1, im: 0 }, a));
+  const k = 9.5;                            // échelle : pixels par unité
+  const T = (p) => [CX + (p[0] - pole.re) * k, CY + (p[1] - pole.im) * k];
+  const g = svg("g", { opacity: .55 }, parent);
+  let d = "";
+  squares.forEach((q, i) => {
+    const [x, y] = T([q.x, q.y]);
+    svg("rect", { x, y, width: q.s * k, height: q.s * k, fill: "none", stroke: "#ff5fa2", "stroke-opacity": .18, "stroke-width": 1 }, g);
+    const [fx, fy] = T(q.from), [tx, ty] = T(q.to);
+    d += (i === 0 ? `M${fx} ${fy}` : "") + ` A${q.s * k} ${q.s * k} 0 0 1 ${tx} ${ty}`;
+  });
+  svg("path", { d, fill: "none", stroke: "#ffd700", "stroke-opacity": .35, "stroke-width": 1.5 }, g);
+}
+
+function buildBoard() {
+  const board = $("board");
+  board.innerHTML = `
+    <defs>
+      <radialGradient id="boardBg"><stop offset="0" stop-color="#2a0c48"/><stop offset="1" stop-color="#07020d"/></radialGradient>
+      <clipPath id="boardClip"><circle cx="${CX}" cy="${CY}" r="396"/></clipPath>
+    </defs>`;
+  svg("circle", { cx: CX, cy: CY, r: 396, fill: "url(#boardBg)", stroke: "#b026ff", "stroke-width": 2, filter: "url(#glow)" }, board);
+  const deco = svg("g", { "clip-path": "url(#boardClip)" }, board);
+  drawGoldenSpiral(deco);
+
+  const { pos, samples } = computeCellPositions();
+  cellPos = pos;
+  // piste néon
+  const track = "M" + samples.filter((_, i) => i % 20 === 0).map((p) => p.join(" ")).join(" L") + ` L${CX} ${CY}`;
+  svg("path", { d: track, fill: "none", stroke: "#b026ff", "stroke-width": 16, "stroke-opacity": .18, "stroke-linecap": "round" }, board);
+  svg("path", { d: track, fill: "none", stroke: "#d47bff", "stroke-width": 2, filter: "url(#glow)" }, board);
+
+  const cells = svg("g", {}, board);
+  for (let n = 0; n <= LAST; n++) {
+    const t = CELL_TYPES[cellType(n)];
+    const [x, y] = pos[n];
+    const r = n === LAST ? 46 : n === 0 ? 33 : CELL_R;
+    const g = svg("g", { class: "cell", "data-cell": n }, cells);
+    svg("title", {}, g).textContent = `Case ${n}${t.name ? " — " + t.name : ""}${t.desc ? " : " + t.desc : ""}`;
+    svg("circle", { class: "bg", cx: x, cy: y, r, stroke: t.color, filter: cellType(n) === "normal" ? "" : "url(#glow)" }, g);
+    if (t.icon) {
+      svg("text", { class: "ico", x, y: y + 3, style: n === LAST ? "font-size:38px" : "" }, g).textContent = t.icon;
+      svg("text", { class: "num", x, y: y - r + 13, style: "font-size:10px" }, g).textContent = n;
+    } else {
+      svg("text", { class: "num", x, y: y + 5, style: "font-size:16px" }, g).textContent = n;
+    }
+  }
+  svg("g", { id: "pawns" }, board);
+}
+
+/* =====================================================================
+   6. ÉTAT DE LA PARTIE
+   ===================================================================== */
+
+let G = null;
+let lastSetup = null;
+let lastSettings = { ...DEFAULT_SETTINGS };
+
+function readSettings() {
+  return { cards: $("cardsSetting").value, speed: $("speedSetting").value };
+}
+
+// Applique les réglages : cases Cadeau du plateau et vitesse des pions
+function applySettings(settings) {
+  cardCells = CARD_CELL_SETS[settings.cards];
+  const sp = SPEEDS[settings.speed];
+  stepDelay = sp.step;
+  jumpDelay = sp.jump;
+  document.documentElement.style.setProperty("--pawn-move", Math.round(sp.step * 0.875) + "ms");
+}
+
+function updateSettingsHint() {
+  const st = readSettings();
+  $("settingsHint").textContent = `Cases Cadeau : ${CARD_CELL_SETS[st.cards].join(", ")}. `
+    + `Pions : ${SPEEDS[st.speed].step} ms par case, ${SPEEDS[st.speed].jump} ms par saut.`;
+}
+
+function newGame(list, settings = lastSettings) {
+  lastSetup = list;
+  lastSettings = settings;
+  applySettings(settings);
+  const deck = [];
+  Object.values(CARDS).forEach((c) => { for (let i = 0; i < c.copies; i++) deck.push(c.id); });
+  G = {
+    players: list.map((p, i) => ({
+      id: i, name: p.name, costume: p.costume, color: p.costume.color,
+      pos: 0, hand: [],
+      cageTurns: 0,      // tours à passer (Piège de Kuromi)
+      sleepy: 0,         // tours à passer (Bâillement)
+      inHole: false,     // coincé dans la Sieste de Gudetama
+      shield: false,     // Câlin de Cinnamoroll actif
+      melody: 0,         // tours d'immunité restants
+      extraRoll: false,  // Pomme de Hello Kitty
+      cheatValue: null,  // Triche de Badtz-Maru
+    })),
+    turn: 0, round: 1, settings,
+    deck: shuffle(deck), discard: [],
+    rolled: false, cardPlayed: false, busy: false, over: false,
+  };
+  $("setup").classList.add("hidden");
+  $("game").classList.remove("hidden");
+  document.querySelectorAll(".game-only").forEach((b) => b.classList.remove("hidden"));
+  $("log").innerHTML = "";
+  $("die1").textContent = "?"; $("die2").textContent = "?";
+  buildBoard();
+  buildPawns();
+  log(`La partie commence avec ${G.players.length} joueurs. Direction Sanrio Puroland 🏰 !`);
+  startTurn();
+}
+
+const cur = () => G.players[G.turn];
+const isBlocked = (p) => p.inHole || p.cageTurns > 0 || p.sleepy > 0;
+
+function log(msg, cls = "") {
+  const d = document.createElement("div");
+  d.innerHTML = msg;
+  if (cls) d.className = cls;
+  const box = $("log");
+  box.prepend(d);
+  while (box.children.length > 80) box.lastChild.remove();
+}
+const tag = (p) => `<b style="color:${p.color}">${esc(p.name)}</b>`;
+
+/* =====================================================================
+   7. AFFICHAGE
+   ===================================================================== */
+
+function buildPawns() {
+  const layer = $("pawns");
+  layer.innerHTML = "";
+  G.players.forEach((p) => {
+    const g = svg("g", { class: "pawn", id: "pawn" + p.id }, layer);
+    svg("circle", { class: "halo", r: 16, fill: "none", stroke: p.color, "stroke-width": 2, opacity: 0 }, g);
+    drawGoose(g, p.costume);
+  });
+}
+
+function placePawns() {
+  const groups = {};
+  G.players.forEach((p) => (groups[p.pos] = groups[p.pos] || []).push(p));
+  for (const pos in groups) {
+    const list = groups[pos];
+    const [x, y] = cellPos[pos];
+    const spread = list.length === 1 ? 0 : Math.min(30, 12 + list.length * 3);
+    const scale = list.length > 4 ? 1.05 : list.length > 1 ? 1.3 : 1.65;   // environ x1,5 par rapport à avant
+    list.forEach((p, i) => {
+      const ang = (2 * Math.PI * i) / list.length - Math.PI / 2;
+      const px = x + spread * Math.cos(ang), py = y + spread * Math.sin(ang);
+      const el = $("pawn" + p.id);
+      el.style.transform = `translate(${px}px, ${py}px) scale(${scale})`;
+      el.classList.toggle("current", !G.over && p === cur());
+    });
+  }
+  // le pion du joueur actif passe au-dessus des autres
+  const c = $("pawn" + cur().id);
+  c.parentNode.appendChild(c);
+}
+
+function statusIcons(p) {
+  let s = "";
+  if (p.inHole) s += " 🍳";
+  if (p.cageTurns) s += ` 💀×${p.cageTurns}`;
+  if (p.sleepy) s += ` 🥱×${p.sleepy}`;
+  if (p.shield) s += " 🤍";
+  if (p.melody) s += ` 🎵×${p.melody}`;
+  return s;
+}
+
+function render() {
+  if (!G) return;
+  placePawns();
+  const p = cur();
+  $("turnName").innerHTML = G.over ? "Partie terminée" : `Au tour de <span style="color:${p.color}">${esc(p.name)}</span>`;
+  let st = `Manche ${G.round} — case ${p.pos}${statusIcons(p)}`;
+  if (p.inHole) st += "<br>Coincé dans la Sieste de Gudetama : il faut qu'un autre joueur tombe sur la case 31.";
+  else if (p.cageTurns) st += `<br>Pris au Piège de Kuromi : encore ${p.cageTurns} tour(s) à passer.`;
+  else if (p.sleepy) st += "<br>Endormi par Gudetama : ce tour est passé.";
+  if (p.cheatValue) st += `<br>🎲 Triche active : le premier dé fera ${p.cheatValue}.`;
+  if (p.extraRoll) st += "<br>🍎 Vous relancerez les dés après ce déplacement.";
+  $("turnStatus").innerHTML = st;
+
+  $("restartBtn").disabled = $("quitBtn").disabled = G.busy;
+  const btn = $("mainBtn");
+  btn.disabled = G.busy || G.over || G.rolled;
+  btn.textContent = isBlocked(p) ? "⏭ Passer le tour" : "🎲 Lancer les dés";
+
+  // main
+  const hand = $("hand");
+  hand.innerHTML = "";
+  if (!p.hand.length) hand.innerHTML = `<div class="empty">Aucune carte. Tombez sur un 🎁 pour en gagner une !</div>`;
+  p.hand.forEach((id, i) => {
+    const c = CARDS[id];
+    const b = document.createElement("button");
+    b.className = "hcard " + c.kind;
+    b.style.borderColor = c.color;
+    b.style.boxShadow = `0 0 6px ${c.color}`;
+    b.innerHTML = `<span class="ic">${c.icon}</span><span>${c.name}<small>${c.desc}</small></span>`;
+    const why = whyNotPlayable(p, id);
+    b.disabled = !!why;
+    b.title = why || "Jouer cette carte";
+    b.onclick = () => playCard(i);
+    hand.appendChild(b);
+  });
+
+  // joueurs
+  $("players").innerHTML = [...G.players]
+    .map((q) => `<div class="pl ${q === p && !G.over ? "current" : ""}">
+      <svg class="mini" viewBox="-19 -19 38 38" width="30" height="30" data-pid="${q.id}"></svg>
+      <span class="nm">${esc(q.name)} <small style="color:var(--muted)">(${q.costume.name})</small>${statusIcons(q)}</span>
+      <span title="cartes en main">🃏${q.hand.length}</span>
+      <span class="pos">${q.pos}</span></div>`).join("");
+  document.querySelectorAll("#players .mini").forEach((m) => drawGoose(m, G.players[+m.dataset.pid].costume));
+}
+
+function whyNotPlayable(p, id) {
+  if (G.over) return "Partie terminée";
+  if (G.busy) return "Action en cours…";
+  if (G.cardPlayed) return "Vous avez déjà joué une carte ce tour-ci";
+  if (G.rolled) return "Les cartes se jouent avant de lancer les dés";
+  const c = CARDS[id];
+  if (isBlocked(p) && !c.playableWhenBlocked) return "Impossible quand vous êtes bloqué";
+  return c.canPlay(p, API) || "";
+}
+
+/* =====================================================================
+   8. DÉPLACEMENTS
+   ===================================================================== */
+
+// Avance (dir = 1) ou recule (dir = -1) case par case, avec rebond sur la case 55.
+// Renvoie la direction finale (utile pour le Nœud de Hello Kitty après un rebond).
+async function moveSteps(p, steps, dir = 1) {
+  for (let i = 0; i < steps; i++) {
+    if (dir === 1 && p.pos === LAST) dir = -1;
+    if (dir === -1 && p.pos === 0) break;
+    p.pos += dir;
+    render();
+    await wait(stepDelay);
+  }
+  return dir;
+}
+
+async function jumpTo(p, target) {
+  p.pos = target;
+  render();
+  await wait(jumpDelay);
+}
+
+function useShield(p, what) {
+  if (!p.shield) return false;
+  p.shield = false;
+  log(`🤍 Le Câlin de Cinnamoroll protège ${tag(p)} : ${what} est évité !`);
+  return true;
+}
+
+// Applique l'effet de la case où se trouve le joueur (en boucle pour les enchaînements)
+async function resolveCell(p, roll, dir) {
+  for (;;) {
+    const t = cellType(p.pos);
+    if (t === "portal") {
+      log(`🎀 ${tag(p)} touche le Nœud de Hello Kitty en case ${p.pos} : ${dir === 1 ? "encore" : "et recule encore de"} ${roll} cases !`);
+      await wait(300);
+      dir = await moveSteps(p, roll, dir);
+      continue;
+    }
+    if (t === "bridge") {
+      log(`☁️ ${tag(p)} s'envole sur le Nuage de Cinnamoroll jusqu'à la case ${BRIDGE_TARGET} !`);
+      await jumpTo(p, BRIDGE_TARGET);
+      continue;
+    }
+    if (t === "cage") {
+      if (useShield(p, "le Piège de Kuromi")) return;
+      p.cageTurns = 2;
+      log(`💀 ${tag(p)} tombe dans le Piège de Kuromi : il passe 2 tours.`);
+      return;
+    }
+    if (t === "hole") {
+      if (useShield(p, "la Sieste de Gudetama")) return;
+      const other = G.players.find((o) => o !== p && o.inHole);
+      if (other) {
+        other.inHole = false;
+        log(`🍳 ${tag(other)} se réveille et sort de la Sieste de Gudetama !`);
+      }
+      p.inHole = true;
+      log(`🍳 ${tag(p)} s'endort dans la Sieste de Gudetama… Bloqué jusqu'à ce qu'un autre joueur arrive ici.`);
+      return;
+    }
+    if (t === "glitch") {
+      if (useShield(p, "le Labyrinthe de Chococat")) return;
+      log(`🐈‍⬛ ${tag(p)} se perd dans le Labyrinthe de Chococat : retour en case ${GLITCH_TARGET}.`);
+      await jumpTo(p, GLITCH_TARGET);
+      return;
+    }
+    if (t === "slip") {
+      if (useShield(p, "la Flaque de Keroppi")) return;
+      log(`🐸 ${tag(p)} glisse dans la Flaque de Keroppi… retour au départ !`);
+      await jumpTo(p, 0);
+      return;
+    }
+    if (t === "card") {
+      await drawCard(p);
+      return;
+    }
+    return;
+  }
+}
+
+async function drawCard(p) {
+  if (!G.deck.length) {
+    G.deck = shuffle(G.discard);
+    G.discard = [];
+    log("La pioche est vide : on remélange la défausse.");
+  }
+  const id = G.deck.pop();
+  p.hand.push(id);
+  log(`🎁 ${tag(p)} ouvre un Cadeau Sanrio : ${CARDS[id].icon} ${CARDS[id].name} !`);
+  render();
+  if (p.hand.length > HAND_MAX) {
+    const idx = await showModal({
+      title: `${p.name} : main pleine !`,
+      body: `<p>Vous ne pouvez garder que ${HAND_MAX} cartes. Choisissez celle à <b>défausser</b> :</p>`,
+      options: p.hand.map((c, i) => ({ label: `${CARDS[c].icon} ${CARDS[c].name}`, value: i })),
+    });
+    const [gone] = p.hand.splice(idx, 1);
+    G.discard.push(gone);
+    log(`${tag(p)} défausse ${CARDS[gone].icon} ${CARDS[gone].name}.`);
+  }
+}
+
+/* =====================================================================
+   9. TOURS DE JEU
+   ===================================================================== */
+
+function startTurn() {
+  const p = cur();
+  G.rolled = false;
+  G.cardPlayed = false;
+  if (p.melody > 0) {
+    p.melody--;
+    if (p.melody === 0) log(`🎵 La Mélodie de ${tag(p)} s'arrête.`);
+  }
+  log(`Tour de ${esc(p.name)} (case ${p.pos})`, "turn");
+  render();
+}
+
+async function nextTurn() {
+  if (G.over) return;
+  const game = G;
+  await wait(350);
+  if (G !== game) return;                // partie relancée ou abandonnée pendant la pause
+  G.turn = (G.turn + 1) % G.players.length;
+  if (G.turn === 0) G.round++;
+  startTurn();
+}
+
+async function mainAction() {
+  if (!G || G.busy || G.over || G.rolled) return;
+  const p = cur();
+  if (isBlocked(p)) return passTurn(p);
+  G.busy = true;
+  G.rolled = true;
+  render();
+
+  // lancer des dés (petite animation)
+  for (let i = 0; i < 6 * (animSpeed ? 1 : 0); i++) {
+    $("die1").textContent = 1 + Math.floor(Math.random() * 6);
+    $("die2").textContent = 1 + Math.floor(Math.random() * 6);
+    await wait(60);
+  }
+  const d1 = p.cheatValue || rollDie();
+  const d2 = rollDie();
+  const cheated = !!p.cheatValue;
+  p.cheatValue = null;
+  $("die1").textContent = d1;
+  $("die2").textContent = d2;
+  const total = d1 + d2;
+  log(`🎲 ${tag(p)} fait ${d1} + ${d2} = <b>${total}</b>${cheated ? " (avec la triche de Badtz-Maru)" : ""}.`);
+
+  const from = p.pos;
+  const dir = await moveSteps(p, total, 1);
+  if (dir === -1 && p.pos !== LAST && from + total > LAST) log(`↩ ${tag(p)} dépasse la case ${LAST} et rebondit en case ${p.pos}.`);
+  await resolveCell(p, total, dir);
+
+  if (p.pos === LAST) return win(p);
+  if (p.extraRoll && !isBlocked(p)) {
+    p.extraRoll = false;
+    log(`🍎 Grâce à la Pomme de Hello Kitty, ${tag(p)} relance les dés !`);
+    G.rolled = false;
+    G.busy = false;
+    render();
+    return;
+  }
+  p.extraRoll = false;
+  G.busy = false;
+  render();
+  nextTurn();
+}
+
+function passTurn(p) {
+  if (p.inHole) log(`🍳 ${tag(p)} dort toujours dans la Sieste de Gudetama.`);
+  else if (p.cageTurns > 0) {
+    p.cageTurns--;
+    log(`💀 ${tag(p)} passe son tour dans le Piège de Kuromi${p.cageTurns ? ` (encore ${p.cageTurns})` : " (libre au prochain tour)"}.`);
+  } else if (p.sleepy > 0) {
+    p.sleepy--;
+    log(`🥱 ${tag(p)} bâille et passe son tour.`);
+  }
+  G.rolled = true;
+  render();
+  nextTurn();
+}
+
+function playerAhead(p) {
+  const ahead = G.players.filter((o) => o !== p && o.pos > p.pos);
+  if (!ahead.length) return null;
+  return ahead.reduce((a, b) => (b.pos < a.pos ? b : a));
+}
+
+// Vérifie les protections de la cible. Renvoie true si l'attaque passe.
+function attack(target, cardName) {
+  if (target.melody > 0) {
+    log(`🎵 La Mélodie de My Melody protège ${tag(target)} : ${cardName} n'a aucun effet !`);
+    return false;
+  }
+  if (target.shield) {
+    target.shield = false;
+    log(`🤍 Le Câlin de Cinnamoroll de ${tag(target)} absorbe ${cardName} !`);
+    return false;
+  }
+  return true;
+}
+
+// invalidReason(o) renvoie "" si o peut être visé, sinon la raison (l'adversaire est alors grisé)
+async function chooseOpponent(p, card, invalidReason = () => "") {
+  const others = G.players.filter((o) => o !== p);
+  return showModal({
+    title: `${card.icon} ${card.name}`,
+    body: `<p>${card.desc}</p><p>Choisissez votre cible :</p>`,
+    options: others.map((o) => ({
+      label: `<span style="color:${o.color}">${esc(o.name)}</span> — case ${o.pos}${statusIcons(o)}${invalidReason(o) ? ` (${invalidReason(o)})` : ""}`,
+      value: o, color: o.color, disabled: !!invalidReason(o),
+    })),
+    cancel: "Annuler",
+  });
+}
+
+/* =====================================================================
+   10. REGISTRE DES CARTES ACTIONS
+   ---------------------------------------------------------------------
+   Pour ajouter une carte, il suffit d'appeler registerCard({...}) :
+     id          identifiant unique (ex. "restart")
+     name        nom affiché            description  effet affiché
+     icon        emoji                  color        couleur néon (facultatif : couleur du type)
+     type        "offensive" | "défensive" | "bonus"
+     copies      exemplaires dans la pioche (facultatif, 4 par défaut)
+     execute(p, api)  effet ; p = joueur qui joue la carte. Renvoie true si la carte est jouée,
+                      false si le joueur annule (la carte reste alors dans sa main).
+     canPlay(p, api)  facultatif : renvoie "" si la carte est jouable, sinon la raison affichée.
+     playableWhenBlocked  facultatif : jouable quand on est bloqué
+                      (par défaut : oui pour offensive et défensive, non pour bonus).
+   La pioche, la main, les Règles et le Catalogue prennent la carte en compte automatiquement.
+   ===================================================================== */
+
+// Outils du moteur mis à disposition des cartes
+const API = {
+  get G() { return G; }, LAST,
+  log, tag, esc, wait, render, showModal, statusIcons,
+  isBlocked, playerAhead, attack, chooseOpponent,
+  moveSteps, jumpTo, resolveCell,
+};
+
+function registerCard(def) {
+  if (!def || !def.id || typeof def.execute !== "function") {
+    throw new Error("registerCard : « id » et « execute(p, api) » sont obligatoires.");
+  }
+  if (CARDS[def.id]) throw new Error(`registerCard : la carte « ${def.id} » existe déjà.`);
+  const type = CARD_TYPES[def.type];
+  if (!type) throw new Error(`registerCard : type « ${def.type} » inconnu (offensive, défensive ou bonus).`);
+  CARDS[def.id] = {
+    id: def.id,
+    name: def.name || def.id,
+    desc: def.description || "",
+    icon: def.icon || "✨",
+    type: def.type,
+    kind: type.kind,
+    color: def.color || type.color,
+    copies: Number.isInteger(def.copies) && def.copies >= 0 ? def.copies : COPIES_PER_CARD,
+    playableWhenBlocked: def.playableWhenBlocked ?? type.kind !== "bonus",
+    canPlay: def.canPlay || (() => ""),
+    execute: def.execute,
+  };
+  return CARDS[def.id];
+}
+
+/* ---------- Les cartes du jeu (dans « execute », this = la carte) ---------- */
+
+registerCard({
+  id: "farce", name: "Farce de Kuromi", icon: "😈", type: "offensive", color: "#ff4d6d",
+  description: "Un adversaire recule de 5 cases.",
+  async execute(p) {
+    const t = await chooseOpponent(p, this);
+    if (!t) return false;
+    log(`😈 ${tag(p)} joue la Farce de Kuromi sur ${tag(t)} !`);
+    if (attack(t, "la Farce de Kuromi")) {
+      await moveSteps(t, 5, -1);
+      if (t.inHole && t.pos !== 31) { t.inHole = false; log(`${tag(t)} est sorti de la Sieste de Gudetama.`); }
+      log(`${tag(t)} recule en case ${t.pos}.`);
+    }
+    return true;
+  },
+});
+
+registerCard({
+  id: "yawn", name: "Bâillement de Gudetama", icon: "🥱", type: "offensive", color: "#ff4d6d",
+  description: "Un adversaire passe son prochain tour.",
+  async execute(p) {
+    const t = await chooseOpponent(p, this);
+    if (!t) return false;
+    log(`🥱 ${tag(p)} joue le Bâillement de Gudetama sur ${tag(t)} !`);
+    if (attack(t, "le Bâillement de Gudetama")) {
+      t.sleepy++;
+      log(`${tag(t)} passera son prochain tour.`);
+    }
+    return true;
+  },
+});
+
+registerCard({
+  id: "wish", name: "Vœu de Kiki & Lala", icon: "🌠", type: "offensive", color: "#ff4d6d",
+  description: "Échangez votre place avec le joueur juste devant vous.",
+  playableWhenBlocked: false,
+  canPlay: (p) => (playerAhead(p) ? "" : "Personne devant vous"),
+  async execute(p) {
+    const t = playerAhead(p);
+    const ok = await showModal({
+      title: `${this.icon} ${this.name}`,
+      body: `<p>Échanger votre place (case ${p.pos}) avec ${tag(t)} (case ${t.pos}) ?</p>`,
+      options: [{ label: "Faire le vœu ✨", value: true, cls: "pink" }],
+      cancel: "Annuler",
+    });
+    if (!ok) return false;
+    log(`🌠 ${tag(p)} fait le Vœu de Kiki & Lala pour prendre la place de ${tag(t)} !`);
+    if (attack(t, "le Vœu de Kiki & Lala")) {
+      [p.pos, t.pos] = [t.pos, p.pos];
+      [p, t].forEach((x) => { if (x.inHole && x.pos !== 31) { x.inHole = false; log(`${tag(x)} est sorti de la Sieste de Gudetama.`); } });
+      render();
+      await wait(450);
+      log(`${tag(p)} est maintenant en case ${p.pos}, ${tag(t)} en case ${t.pos}.`);
+    }
+    return true;
+  },
+});
+
+registerCard({
+  id: "hug", name: "Câlin de Cinnamoroll", icon: "🤍", type: "défensive", color: "#7fd8ff",
+  description: "Bouclier : absorbe la prochaine attaque ou le prochain piège.",
+  canPlay: (p) => (p.shield ? "Câlin déjà actif" : ""),
+  async execute(p) {
+    p.shield = true;
+    log(`🤍 ${tag(p)} reçoit un Câlin de Cinnamoroll : le prochain piège ou la prochaine attaque sera absorbé.`);
+    return true;
+  },
+});
+
+registerCard({
+  id: "pudding", name: "Pudding de Pompompurin", icon: "🍮", type: "défensive", color: "#7fd8ff",
+  description: "Libère immédiatement d'un blocage (piège, sieste, bâillement).",
+  canPlay: (p) => (isBlocked(p) ? "" : "Vous n'êtes pas bloqué"),
+  async execute(p) {
+    p.inHole = false; p.cageTurns = 0; p.sleepy = 0;
+    log(`🍮 ${tag(p)} mange le Pudding de Pompompurin et retrouve toute son énergie : il peut jouer !`);
+    return true;
+  },
+});
+
+registerCard({
+  id: "melody", name: "Mélodie de My Melody", icon: "🎵", type: "défensive", color: "#7fd8ff",
+  description: "Immunisé contre les cartes adverses pendant 2 tours.",
+  canPlay: (p) => (p.melody > 0 ? "Mélodie déjà active" : ""),
+  async execute(p) {
+    p.melody = 2;
+    log(`🎵 ${tag(p)} chante la Mélodie de My Melody : immunisé contre les cartes adverses pendant 2 tours.`);
+    return true;
+  },
+});
+
+registerCard({
+  id: "sprint", name: "Sprint de Pochacco", icon: "🏀", type: "bonus", color: "#ffd23f",
+  description: "Avancez immédiatement de 4 cases.",
+  async execute(p) {
+    log(`🏀 ${tag(p)} fait le Sprint de Pochacco : +4 cases !`);
+    const dir = await moveSteps(p, 4, 1);
+    await resolveCell(p, 4, dir);
+    return true;
+  },
+});
+
+registerCard({
+  id: "apple", name: "Pomme de Hello Kitty", icon: "🍎", type: "bonus", color: "#ffd23f",
+  description: "Relancez les dés après votre déplacement.",
+  canPlay: (p) => (p.extraRoll ? "Pomme déjà active" : ""),
+  async execute(p) {
+    p.extraRoll = true;
+    log(`🍎 ${tag(p)} croque la Pomme de Hello Kitty : il relancera les dés après son déplacement.`);
+    return true;
+  },
+});
+
+registerCard({
+  id: "cheat", name: "Triche de Badtz-Maru", icon: "🎲", type: "bonus", color: "#ffd23f",
+  description: "Choisissez la valeur d'un des deux dés.",
+  canPlay: (p) => (p.cheatValue ? "Triche déjà active" : ""),
+  async execute(p) {
+    const v = await showModal({
+      title: `${this.icon} ${this.name}`,
+      body: "<p>Choisissez la valeur du premier dé :</p>",
+      options: [1, 2, 3, 4, 5, 6].map((n) => ({ label: `🎲 ${n}`, value: n })),
+      cancel: "Annuler",
+    });
+    if (!v) return false;
+    p.cheatValue = v;
+    log(`🎲 ${tag(p)} triche avec Badtz-Maru : le premier dé fera ${v}.`);
+    return true;
+  },
+});
+
+// Nouvelle carte, ajoutée uniquement avec registerCard et les outils de « api »
+registerCard({
+  id: "restart", name: "On recommence", icon: "🔄", type: "offensive", color: "#ff9f40", copies: 4,
+  description: "Un adversaire retourne immédiatement à la case départ (et n'est plus bloqué).",
+  canPlay: (p, api) => (api.G.players.some((o) => o !== p && o.pos > 0) ? "" : "Aucun adversaire hors de la case départ"),
+  async execute(p, api) {
+    const t = await api.chooseOpponent(p, this, (o) => (o.pos === 0 ? "déjà au départ" : ""));
+    if (!t) return false;
+    api.log(`🔄 ${api.tag(p)} joue « On recommence » sur ${api.tag(t)} !`);
+    if (api.attack(t, "« On recommence »")) {
+      const wasBlocked = api.isBlocked(t);
+      t.inHole = false; t.cageTurns = 0; t.sleepy = 0;
+      await api.jumpTo(t, 0);           // déplacement imposé : aucune case spéciale déclenchée
+      api.log(`${api.tag(t)} retourne à la case départ${wasBlocked ? " et n'est plus bloqué" : ""}.`);
+    }
+    return true;
+  },
+});
+
+async function playCard(i) {
+  const p = cur();
+  const id = p.hand[i];
+  if (!id || whyNotPlayable(p, id)) return;
+  G.busy = true;
+  p.hand.splice(i, 1);                   // retirée avant l'effet (évite qu'elle soit défaussée par erreur)
+  render();
+  const wasBlocked = isBlocked(p);
+  const ok = await CARDS[id].execute(p, API);
+  if (!ok) {
+    p.hand.splice(i, 0, id);
+    G.busy = false;
+    render();
+    return;
+  }
+  G.discard.push(id);
+  G.cardPlayed = true;
+  G.busy = false;
+  if (p.pos === LAST) return win(p);
+  render();
+  // Si la carte mène le joueur dans un piège (ex. Sprint), le tour s'arrête là
+  if (!wasBlocked && isBlocked(p)) {
+    log(`${tag(p)} est bloqué : son tour s'arrête.`);
+    G.rolled = true;
+    render();
+    nextTurn();
+  }
+}
+
+/* =====================================================================
+   11. VICTOIRE
+   ===================================================================== */
+
+async function win(p) {
+  G.over = true;
+  G.busy = false;
+  log(`🏰 ${tag(p)} arrive à Sanrio Puroland et gagne la partie !`, "turn");
+  render();
+  const ranking = [...G.players].sort((a, b) => b.pos - a.pos)
+    .map((q, i) => `<li><span style="color:${q.color}">${esc(q.name)}</span> (${q.costume.name}) — case ${q.pos}${i === 0 ? " 👑" : ""}</li>`).join("");
+  const choice = await showModal({
+    title: `🏰 ${p.name} gagne !`,
+    body: `<p>L'oie déguisée en <b style="color:${p.color}">${p.costume.name}</b> est arrivée en ${G.round} manche(s) à Sanrio Puroland !</p><ol>${ranking}</ol>`,
+    options: [
+      { label: "🔁 Rejouer avec les mêmes joueurs", value: "again", cls: "pink" },
+      { label: "✏️ Nouvelle partie (changer les joueurs)", value: "setup" },
+      { label: "Voir le plateau", value: "stay", cls: "small" },
+    ],
+  });
+  if (choice === "again") newGame(lastSetup, lastSettings);
+  else if (choice === "setup") backToSetup();
+}
+
+function backToSetup() {
+  if (closeModal) closeModal(null);      // ex. l'écran de victoire encore ouvert
+  G = null;
+  $("game").classList.add("hidden");
+  $("setup").classList.remove("hidden");
+  document.querySelectorAll(".game-only").forEach((b) => b.classList.add("hidden"));
+}
+
+// Nouvelle partie avec les mêmes pseudos, costumes et réglages (plateau, pioche et mains remis à zéro)
+const restartSamePlayers = () => { if (closeModal) closeModal(null); newGame(lastSetup, lastSettings); };
+
+/* =====================================================================
+   12. ÉVÉNEMENTS
+   ===================================================================== */
+
+$("validateNb").onclick = buildPlayerRows;
+$("nbPlayers").addEventListener("keydown", (e) => { if (e.key === "Enter") buildPlayerRows(); });
+$("startBtn").onclick = () => {
+  const res = readPlayers();
+  if (typeof res === "string") { $("namesError").textContent = res; return; }
+  $("namesError").textContent = "";
+  newGame(res, readSettings());
+};
+$("cardsSetting").onchange = updateSettingsHint;
+$("speedSetting").onchange = updateSettingsHint;
+updateSettingsHint();
+$("mainBtn").onclick = mainAction;
+$("rulesBtn").onclick = showRules;
+$("catalogBtn").onclick = showCatalog;
+$("infoClose").onclick = () => closeInfo && closeInfo(null);
+$("info").addEventListener("click", (e) => { if (e.target.id === "info" && closeInfo) closeInfo(null); });
+$("restartBtn").onclick = async () => {
+  if (!G || G.busy) return;
+  if (!G.over && !(await confirmInfo("Nouvelle partie ?", "La partie en cours sera remise à zéro avec les mêmes joueurs, costumes et réglages.", "Oui, on recommence"))) return;
+  if (G && !G.busy) restartSamePlayers();
+};
+$("quitBtn").onclick = async () => {
+  if (!G || G.busy) return;
+  if (!G.over && !(await confirmInfo("Changer les joueurs ?", "La partie en cours sera perdue.", "Oui, nouvelle partie"))) return;
+  if (G && !G.busy) backToSetup();
+};
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && closeInfo) { closeInfo(null); return; }
+  if (e.code === "Space" && G && $("modal").classList.contains("hidden") && $("info").classList.contains("hidden")
+      && !["INPUT", "SELECT"].includes(document.activeElement.tagName)) {
+    e.preventDefault();
+    mainAction();
+  }
+});
+
+// Accès pour les tests automatiques
+window.registerCard = registerCard;      // permet d'ajouter une carte depuis la console ou un autre script
+window.OIE = {
+  get G() { return G; }, forcedDice, CARDS, cellType, render, setSpeed: (s) => (animSpeed = s),
+  get settings() { return lastSettings; }, restartSamePlayers, get delays() { return { stepDelay, jumpDelay }; }, CARD_CELL_SETS,
+};
+</script>
+</body>
+</html>
